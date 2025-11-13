@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <title>Clearance, OSM Logical History and Underpass API</title>
+    <link rel="shortcut icon" href="./favicon.ico" />
+    <link rel="stylesheet" href="./dist/reset.css" />
+    <link rel="stylesheet" href="./dist/reveal.css" />
+    <link rel="stylesheet" href="./dist/theme/white.css" id="theme" />
+    <link rel="stylesheet" href="./css/highlight/base16/zenburn.css" />
+
+    <link rel="stylesheet" href="./_assets/style.css" />
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section data-markdown data-separator="\r?\n---\r?\n" data-separator-vertical="\r?\n----\r?\n">
+          <textarea data-template>
+            
+
+## Clearance, OSM Logical History and Underpass API
+
+OSM Data Replication under Quality Constraints
+
+## SotM EU 2025
+
+Frédéric Rodrigo - Teritorio
+
+frederic@teritorio.fr
+
+<img src="include/logo-teritorio.svg" height="50px"/>
+<img src="include/nlnet.svg" height="50px"/>
+
+---
+
+## Context
+
+- Contribution to OSM as a main business database
+- Quickly deploy changes from OSM
+- Ensure the quality of provided data
+
+e.g. Local government (POIs), Civil defense (road network)
+
+![Civil defense of Navarra](include/navarra.jpeg)
+
+----
+
+## Needs
+
+### QA OSM changes
+- QA focused on business OSM objects
+- Minimize human review workload
+- Comprehensive changes
+- Work at the OSM data level: use OSM tools
+
+### Deploy changes quickly when possible
+- Changes outside the area or thematic focus
+- Coherence and reliability of partial changes
+
+---
+
+## Existing QA Tools
+
+- Check State Before Contributions
+  - JOSM Validator
+
+- Check State After Contributions
+  - Keep Right, OSM Inspector, Osmose-QA*
+
+- Check Changes After Contributions
+  - OSMCha
+
+---
+
+Another Way
+
+# Check Before Replication
+
+---
+
+## Quality, Replication and API
+
+The quality of incoming OSM updates is never known
+
+![](include/Clearance-process-text.svg)
+
+Filter changes
+
+---
+
+## Replication, Data Update
+
+- Database, Import
+  - OSM Extract
+  - Save incoming Diff without applying
+- Check update Quality
+  - OK ⇒ Apply changes
+  - Not OK ⇒ Hold on
+    - Fix in OSM
+    - Wait for the next OSM update to be OK
+
+Invariant: Quality is only increasing
+
+----
+
+### Partial Replication, LoCha
+
+LoCha: Local Changeset
+
+Clustered sum of changes
+
+Apply Quality Checks locally
+- Hold on locally
+- Let others pass ⇒ deploy updates quickly
+
+---
+
+## Quality - Validation Rules
+
+- Check changes between
+  - last sync object versions
+  - and held incoming changes
+- Check using tags, geometry, metadata, changeset...
+- Check object changes individually or in groups
+
+----
+
+## Rule Examples
+
+- Geometry moved > 10 m
+- Blacklisted tags or users
+- Changes by a new contributor
+- Force manual review (e.g. defibrillator deletion)
+- Hold on “hot” changes:
+  - still being updated
+  - edit wars / vandalism
+- Road network continuity must remain (TODO)
+- Contributions should not duplicate POIs (TODO)
+
+---
+
+## OSM Local History
+
+Comprehensive changes
+
+Apply rules at semantic level
+
+### Conflation between
+- last synchronized object versions
+- and held incoming changes
+
+### Is it a business change or not?
+- Moving tags from node to way
+- Splitting / merging on way or area
+
+----
+
+## OSM Local History - As a Tool
+
+https://teritorio.github.io/openstreetmap-logical-history-component/
+
+Review OSM changes at semantic level [Demo](https://teritorio.github.io/openstreetmap-logical-history-component/?date_start=2024-12-09T23:00:00.000Z&date_end=2024-12-14T23:00:00.000Z&bbox=-1.6537454710167148,42.685107065011486,-1.6509720668953156,42.68686379572838)
+
+![Example OSM-LH](include/osm-lh.webp)
+
+<img src="include/qrcode-osm-lh.svg" height="150px" style="position: fixed; bottom: 0; left: 0;"/>
+
+---
+
+## Clearance
+## as OSM Data Proxy
+
+### Standard Output
+- OSM PBF Extract
+- Diff update
+  - according to validation order
+
+### Acts as Overpass
+- Overpass-like API to access sync DB
+
+---
+
+## Underpass API
+### Overpass to SQL
+
+Why?
+- Overpass API: the standard way to extract data
+- Clearance: many partially synchronized DBs
+  - avoids managing multiple Overpass instances
+- Building Overpass for SQL DBs is a nice challenge
+
+https://github.com/teritorio/overpass_parser_rust
+
+Partial Overpass language support
+
+----
+
+### Underpass API
+
+Multiple SQL dialects / OSM database schemas
+- Postgres/PostGIS, OPE or Osmosis (Clearance)
+- DuckDB/Spatial, Quackosm (Embedded Column DB)
+
+### As a Tool
+- Server-side
+- Browser-side (WASM – yes, it works)
+  - Execute in the browser
+  - Partial Parquet download via HTTP byte ranges
+
+https://github.com/teritorio/Underpass-API
+
+---
+
+## Clearance
+
+1. Sync OSM data from diff
+2. Sum changes + Rearrange as local
+3. Build Semantic Conflation
+4. Validation
+5. Sync or reject
+6. Export + Underpass
+
+----
+
+## Clearance
+
+https://github.com/teritorio/clearance
+
+Demo [clearance.teritorio.xyz](https://clearance.teritorio.xyz)
+
+![](include/Clearance.webp)
+
+---
+
+## Clearance
+
+OSM Extracts sync only with qualified changes
+
+![](include/Clearance-process-text.svg)
+
+Ask for a new project on our demo instance
+
+- https://clearance.teritorio.xyz
+- https://teritorio.github.io/openstreetmap-logical-history-component/
+- https://github.com/teritorio/Underpass-API
+
+<img src="include/logo-teritorio.svg" height="50px"/>
+<img src="include/nlnet.svg" height="50px"/>
+
+---
+
+![](include/Clearance-process-text.svg)
+
+## Clearance
+
+`takeaway=slides`
+
+![](include/qrcode.svg)
+
+https://s.carto.guide/ib3j0m
+
+          </textarea>
+        </section>
+      </div>
+    </div>
+
+    <script src="./dist/reveal.js"></script>
+
+    <script src="./mermaid/dist/mermaid.min.js"></script>
+
+    <script src="./plugin/markdown/markdown.js"></script>
+    <script src="./plugin/highlight/highlight.js"></script>
+    <script src="./plugin/zoom/zoom.js"></script>
+    <script src="./plugin/notes/notes.js"></script>
+    <script src="./plugin/math/math.js"></script>
+    <script>
+      function extend() {
+        var target = {};
+        for (var i = 0; i < arguments.length; i++) {
+          var source = arguments[i];
+          for (var key in source) {
+            if (source.hasOwnProperty(key)) {
+              target[key] = source[key];
+            }
+          }
+        }
+        return target;
+      }
+
+      // default options to init reveal.js
+      var defaultOptions = {
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        transition: 'default', // none/fade/slide/convex/concave/zoom
+        slideNumber: true,
+        highlight: {
+          highlightOnLoad: false
+        },
+        plugins: [
+          RevealMarkdown,
+          RevealHighlight,
+          RevealZoom,
+          RevealNotes,
+          RevealMath
+        ]
+      };
+
+      // options from URL query string
+      var queryOptions = Reveal().getQueryHash() || {};
+
+      var options = extend(defaultOptions, {"controls":true,"progress":true,"_":["Clearance, OSM Logical History and Underpass API.md","Sub.md"],"static":"build","theme":"white"}, queryOptions);
+    </script>
+
+
+    <script>
+      Reveal.initialize(options);
+      Reveal.addEventListener('ready', function (event) {
+        const blocks = Reveal.getRevealElement().querySelectorAll('pre code:not(.mermaid)');
+        const hlp = Reveal.getPlugin('highlight');
+        blocks.forEach(hlp.highlightBlock);
+      });
+    </script>
+
+    <script>
+      const mermaidOptions = extend({ startOnLoad: false }, {});
+      mermaid.startOnLoad = false;
+      mermaid.initialize(mermaidOptions);
+      const cb = function (event) {
+        mermaid.init(mermaidOptions, '.stack.present > .present pre code.mermaid');
+        mermaid.init(mermaidOptions, '.slides > .present:not(.stack) pre code.mermaid');
+      }
+      Reveal.addEventListener('ready', cb);
+      Reveal.addEventListener('slidetransitionend', cb);
+    </script>
+  </body>
+</html>
